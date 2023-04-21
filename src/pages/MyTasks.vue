@@ -3,30 +3,34 @@
     <div class="border-green">
       <h1 class="green">My Tasks</h1>
     </div>
-    <table class="task-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Task Name</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(task, index) in tasks" :key="index">
-          <td><input type="checkbox" :name="`task[${index}]`" :value="task.id" /></td>
-          <td>{{ task.name }}</td>
-          <td>{{ task.status }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div id="status-change">
-      <span>Change Status:</span>
-      <select id="status-select" v-model="selectedStatus">
-        <option v-for="(status, index) in statusOptions" :value="status.id" :key="index">
-          {{ status.name }}
-        </option>
-      </select>
-      <button id="status-confirm" @click="updateStatus">Confirm</button>
+    <LoadingBox v-if="loading" />
+
+    <div v-else>
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Task Name</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(task, index) in tasks" :key="index">
+            <td><input type="checkbox" v-model="selected_tasks" :value="task.id" /></td>
+            <td>{{ task.name }}</td>
+            <td>{{ task.status_name }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div id="status-change">
+        <span>Change Status:</span>
+        <select id="status-select" v-model="selectedStatusId">
+          <option v-for="(status, index) in statusOptions" :value="status.id" :key="index">
+            {{ status.name }}
+          </option>
+        </select>
+        <button id="status-confirm" @click="updateStatus">Confirm</button>
+      </div>
     </div>
   </div>
 </template>
@@ -34,12 +38,16 @@
 <script>
 import axios from 'axios'
 import config from '../config'
+import LoadingBox from '../components/LoadingBox.vue'
 
 export default {
+  components: { LoadingBox },
   data() {
     return {
+      selected_tasks: [],
+      loading: false,
       tasks: [],
-      selectedStatus: '',
+      selectedStatusId: '',
       statusOptions: []
     }
   },
@@ -49,6 +57,7 @@ export default {
   },
   methods: {
     async fetchStatuses() {
+      this.loading = true
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
       try {
@@ -58,38 +67,56 @@ export default {
         this.statusOptions = statuses
         console.log(this.statusOptions)
         // do something with the statuses
+        this.loading = false
       } catch (error) {
         console.error(error)
+        this.loading = false
       }
     },
     async fetchTasks() {
+      this.loading = true
       const token = localStorage.getItem('token')
+      const user = JSON.parse(localStorage.getItem('user'))
       const headers = { Authorization: `Bearer ${token}` }
+      const payload = { user_id: user.id }
       try {
-        const response = await axios.get(config.BASE_URL + '/api/tasks', { headers })
+        const response = await axios.post(config.BASE_URL + '/api/my-tasks', payload, { headers })
         this.tasks = response.data.tasks
+        this.loading = false
       } catch (error) {
         console.error(error)
+        this.loading = false
       }
     },
     async updateStatus() {
-      // Implement this method to update the status of the selected tasks
+      const token = localStorage.getItem('token')
+      const user = JSON.parse(localStorage.getItem('user'))
+      const headers = { Authorization: `Bearer ${token}` }
+
+      const payload = {
+        ids: this.selected_tasks,
+        status_id: this.selectedStatusId,
+        user_id: user.id
+      }
+
+      axios
+        .post(config.BASE_URL + '/api/task/update', payload, { headers })
+        .then((response) => {
+          console.log(response.data)
+          this.fetchStatuses
+          alert('Tasks Updated')
+        })
+        .catch((error) => {
+          console.error(error)
+          // handle error
+          alert('Something went wrong')
+        })
     }
   }
 }
 </script>
   
 <style scoped>
-.btns-box {
-  display: flex;
-  justify-content: center;
-}
-.btnFilter {
-  margin-left: 1rem;
-}
-.btn-delete {
-  background-color: rgb(231, 40, 40);
-}
 .container {
   padding: 0px;
   margin-left: auto;
