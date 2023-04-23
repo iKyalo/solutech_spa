@@ -30,8 +30,6 @@ export default {
   },
   methods: {
     async login() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
       try {
         const response = await axios.post(config.BASE_URL + '/api/login', {
           email: this.email,
@@ -40,7 +38,7 @@ export default {
         console.log(response.data)
         localStorage.setItem('token', response.data.access_token)
         localStorage.setItem('user', JSON.stringify(response.data.user))
-        this.$router.push('/')
+        this.$router.replace('/')
       } catch (error) {
         console.error(error)
         alert(error.response.data.message)

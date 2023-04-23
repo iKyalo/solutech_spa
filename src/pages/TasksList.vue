@@ -1,12 +1,39 @@
 <template>
   <div class="container">
-    <ModalTask :show="show" />
+    <ModalTask :title="'Add New Task'" :show="show" @close="closeModal">
+      <form @submit.prevent="addTask">
+        <label for="task-input">Task Title:</label>
+        <input type="text" id="task-input" v-model="new_task.title" required />
+
+        <label for="description-input">Task Description:</label>
+        <textarea id="description-input" v-model="new_task.description"></textarea>
+
+        <label style="margin-top: 10px" for="due-date-input">Due Date:</label>
+        <input type="date" id="due-date-input" v-model="new_task.date" />
+
+        <button type="submit">Add Task</button>
+      </form>
+    </ModalTask>
+    <!-- <ModalFilter :title="'Filter'" :show="false" @close="closeFilter">
+      <form @submit.prevent="submitFilter">
+        <label for="task-input">Task Title:</label>
+        <input type="text" id="task-input" v-model="new_task.title" required />
+
+        <label for="description-input">Task Description:</label>
+        <textarea id="description-input" v-model="new_task.description"></textarea>
+
+        <label style="margin-top: 10px" for="due-date-input">Due Date:</label>
+        <input type="date" id="due-date-input" v-model="new_task.date" />
+
+        <button type="submit">Add Task</button>
+      </form>
+    </ModalFilter> -->
     <div class="border-green">
       <h1 class="green">Task List</h1>
     </div>
     <div class="btns-box">
       <button class="btnAddTask" @click="openModal">Add New</button>
-      <button class="btnFilter" @click="filter">Filter</button>
+      <!-- <button class="btnFilter" @click="openFilter">Filter</button> -->
     </div>
     <table class="task-table">
       <thead>
@@ -20,10 +47,10 @@
       </thead>
       <tbody>
         <tr v-for="(task, index) in tasks" :key="index">
-          <td><input type="checkbox" name="task[]" :value="task.id" /></td>
+          <td>{{ ++index }}</td>
           <td>{{ task.name }}</td>
-          <td>{{ task.status }}</td>
-          <td>{{ task.assigned_to }}</td>
+          <td>{{ task.status_name }}</td>
+          <td>{{ task.user_name }}</td>
           <td><button class="btn-edit">Edit</button> <button class="btn-delete">Delete</button></td>
         </tr>
       </tbody>
@@ -37,11 +64,17 @@ import ModalTask from '../components/ModalTask.vue'
 import config from '../config'
 
 export default {
-  components: ModalTask,
+  components: { ModalTask },
   data() {
     return {
       show: false,
-      tasks: []
+      filter: false,
+      tasks: [],
+      new_task: {
+        title: '',
+        description: '',
+        date: ','
+      }
     }
   },
   mounted() {
@@ -67,8 +100,57 @@ export default {
       }
     },
     openModal() {
-      console.log('clicked')
+      console.log('opened')
       this.show = true
+    },
+    openFilter() {
+      console.log('opened')
+      this.filter = true
+    },
+    closeModal() {
+      console.log('closed')
+      this.show = false
+    },
+    resetForm() {
+      this.new_task.title = ''
+      this.new_task.description = ''
+      this.new_task.date = ''
+    },
+    addTask() {
+      const token = localStorage.getItem('token')
+      const headers = { Authorization: `Bearer ${token}` }
+
+      axios
+        .post(config.BASE_URL + '/api/tasks', this.new_task, { headers })
+        .then((response) => {
+          // handle success response
+          console.log(response.data)
+          this.resetForm()
+          alert('Task Added Successfully')
+          this.fetchTasks
+        })
+        .catch((error) => {
+          // handle error response
+          console.error(error.response.data.message)
+        })
+    },
+    submitFilter() {
+      const token = localStorage.getItem('token')
+      const headers = { Authorization: `Bearer ${token}` }
+
+      axios
+        .post(config.BASE_URL + '/api/tasks', this.new_task, { headers })
+        .then((response) => {
+          // handle success response
+          console.log(response.data)
+          this.resetForm()
+          alert('Task Added Successfully')
+          this.fetchTasks
+        })
+        .catch((error) => {
+          // handle error response
+          console.error(error.response.data.message)
+        })
     }
   }
 }

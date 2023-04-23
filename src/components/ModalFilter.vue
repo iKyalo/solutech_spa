@@ -1,15 +1,15 @@
 <template>
-  <div class="modal" v-if="open">
+  <div class="modal" v-if="show">
     <div class="modal-content">
       <div class="modal-header">
         <h3>{{ title }}</h3>
-        <span class="close" @click="close">&times;</span>
+        <span class="close" @click="closeFilter">&times;</span>
       </div>
       <div class="modal-body">
         <slot></slot>
       </div>
       <div class="modal-footer">
-        <button @click="close">Close</button>
+        <button @click="closeFilter">Close</button>
       </div>
     </div>
   </div>
@@ -17,7 +17,7 @@
     
     <script>
 export default {
-  name: 'ModalTask',
+  name: 'ModalFilter',
   props: {
     title: {
       type: String,
@@ -25,7 +25,7 @@ export default {
     },
     show: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
   data: function () {
@@ -34,8 +34,8 @@ export default {
     }
   },
   methods: {
-    close() {
-      this.open = false
+    closeFilter() {
+      this.$emit('closeFilter')
     }
   }
 }

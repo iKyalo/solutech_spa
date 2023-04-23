@@ -27,6 +27,7 @@
         <table>
           <thead>
             <tr>
+              <th>#</th>
               <th>Task name</th>
               <th>Status</th>
               <th>Assigned to</th>
@@ -34,20 +35,20 @@
           </thead>
           <tbody>
             <tr v-for="(stat, idx) in status.status_summary" :key="idx">
-              <td>Task 1</td>
-              <td class="status-completed">Completed</td>
-              <td>User 1</td>
+              <td>{{ stat.id }}</td>
+              <td>{{ stat.name }}</td>
+              <td class="status-completed" v-if="stat.status_name == 'Completed'">
+                {{ stat.status_name }}
+              </td>
+              <td class="status-in-progress" v-if="stat.status_name == 'In Progress'">
+                {{ stat.status_name }}
+              </td>
+              <td class="status-not-started" v-if="stat.status_name == 'Not Started'">
+                {{ stat.status_name }}
+              </td>
+              <td>{{ stat.user_name }}</td>
             </tr>
-            <tr>
-              <td>Task 2</td>
-              <td class="status-in-progress">In progress</td>
-              <td>User 2</td>
-            </tr>
-            <tr>
-              <td>Task 3</td>
-              <td class="status-not-started">Not started</td>
-              <td>User 3</td>
-            </tr>
+
             <!-- add more rows as needed -->
           </tbody>
         </table>
@@ -58,12 +59,12 @@
         <h1>Task Completions Report</h1>
         <div class="border"></div>
         <div class="chart-container">
-          <div class="bar" style="height: 60%"></div>
-          <div class="label">Task 1</div>
-          <div class="bar" style="height: 40%"></div>
-          <div class="label">Task 2</div>
-          <div class="bar" style="height: 80%"></div>
-          <div class="label">Task 3</div>
+          <div v-for="(task, i) in completions.tasks" :key="i" class="bar-box">
+            <div class="bar">
+              <div class="bar-fill" :style="'height: ' + task.completion_rate * 10000 + '%'"></div>
+            </div>
+            <div class="label">{{ task.name.substr(0, 7) }}...</div>
+          </div>
         </div>
         <p>Summary:</p>
         <ul class="ul-info">
@@ -71,9 +72,9 @@
           <li>Average Completion Time: {{ completions.average }} hours</li>
           <li>Tasks with the highest completion rates:</li>
           <ul>
-            <li>Task 3: 80%</li>
-            <li>Task 1: 60%</li>
-            <li>Task 2: 40%</li>
+            <li v-for="(task, i) in completions.tasks" :key="i">
+              {{ task.name }} ({{ task.completion_rate * 100 }}%)
+            </li>
           </ul>
         </ul>
       </div>
@@ -96,23 +97,11 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>John Doe</td>
-              <td>20</td>
-              <td>18</td>
-              <td>2 days</td>
-            </tr>
-            <tr>
-              <td>Jane Smith</td>
-              <td>15</td>
-              <td>12</td>
-              <td>3 days</td>
-            </tr>
-            <tr>
-              <td>Mike Johnson</td>
-              <td>10</td>
-              <td>8</td>
-              <td>2.5 days</td>
+            <tr v-for="(user, idx) in activity.users" :key="idx">
+              <td>{{ user.name }}</td>
+              <td>{{ user.tasks_assigned }}</td>
+              <td>{{ user.tasks_completed }}</td>
+              <td>{{ number_format(user.avg_completion_time) }} hours</td>
             </tr>
             <!-- more users -->
           </tbody>
@@ -146,15 +135,15 @@ export default {
       activity: {
         total: 0,
         active: 0,
-        user_tasks: []
+        users: []
       }
     }
   },
   mounted() {
     document.getElementById('btnStatus').style.backgroundColor = 'purple'
     this.fetchStatusData()
-    // this.fetchCompletionsData()
-    // this.fetchActivityData()
+    this.fetchCompletionsData()
+    this.fetchActivityData()
   },
   methods: {
     async fetchStatusData() {
@@ -167,7 +156,8 @@ export default {
         this.status.total = res.total_tasks
         this.status.completed = res.completed_tasks
         this.status.in_progress = res.in_progress_tasks
-        this.status.not_started = res.status.not_started_tasks
+        this.status.not_started = res.not_started_tasks
+        this.status.status_summary = res.tasks
       } catch (error) {
         console.error(error)
       }
@@ -176,11 +166,12 @@ export default {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
       try {
-        const response = await axios.get(config.BASE_URL + '/api/status/users', { headers })
-        const statuses = response.data
-        console.log(statuses)
-        this.statusOptions = statuses
-        console.log(this.statusOptions)
+        const response = await axios.get(config.BASE_URL + '/api/status/stats', { headers })
+        const dt = response.data
+        console.log(dt)
+        this.completions.total = dt.completed_tasks
+        this.completions.average = dt.average_completion_time
+        this.completions.tasks = dt.top_tasks
         // do something with the statuses
       } catch (error) {
         console.error(error)
@@ -190,10 +181,12 @@ export default {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
       try {
-        const response = await axios.get(config.BASE_URL + '/api/status/stats', { headers })
-        const statuses = response.data
-        console.log(statuses)
-        this.statusOptions = statuses
+        const response = await axios.get(config.BASE_URL + '/api/status/users', { headers })
+        const res = response.data
+        console.log(res)
+        this.activity.total = res.total
+        this.activity.active = res.active
+        this.activity.users = res.users
         console.log(this.statusOptions)
         // do something with the statuses
       } catch (error) {
@@ -211,6 +204,10 @@ export default {
       }
       document.getElementById(boxName).style.display = 'block'
       document.getElementById(`btn${boxName}`).style.backgroundColor = 'purple'
+    },
+    number_format(num) {
+      num = parseFloat(num)
+      return num.toFixed(2)
     }
   }
 }
@@ -323,36 +320,34 @@ h1 {
   margin-bottom: 1px;
 }
 .chart-container {
-  height: 300px;
-  margin-bottom: 20px;
   display: flex;
+  flex-direction: row;
   justify-content: center;
-  align-content: stretch;
-  align-items: baseline;
+  align-items: center;
 }
-.chart-container .bar {
+
+.bar {
   width: 50px;
-  margin-right: 10px;
-  display: inline-block;
-  vertical-align: bottom;
-  background-color: #36a2eb;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
-  transition: height 0.3s ease-in-out;
+  height: 100px;
+  border: 1px solid black;
+  margin: 10px;
+  display: flex;
+  align-items: flex-end;
 }
-.chart-container .label {
-  display: inline-block;
-  font-size: 12px;
-  margin-top: 5px;
-  margin-bottom: 10px;
+
+.bar-fill {
+  background-color: blue;
+  width: 100%;
 }
-.chart-container .value {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+
+.bar-box {
+  margin-right: 1rem;
+}
+
+.label {
   text-align: center;
-  font-size: 14px;
-  margin-bottom: 10px;
+  font-size: 16px;
+  color: black;
 }
 
 .report-container {

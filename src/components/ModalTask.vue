@@ -1,7 +1,7 @@
 <template>
-  <div class="modal" v-if="open">
+  <div class="modal" v-if="show">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header border-green">
         <h3>{{ title }}</h3>
         <span class="close" @click="close">&times;</span>
       </div>
@@ -14,8 +14,8 @@
     </div>
   </div>
 </template>
-    
-    <script>
+
+<script>
 export default {
   name: 'ModalTask',
   props: {
@@ -25,23 +25,27 @@ export default {
     },
     show: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
-  data: function () {
+  data() {
     return {
       open: this.show
     }
   },
   methods: {
     close() {
-      this.open = false
+      this.$emit('close')
     }
   }
 }
 </script>
+/script>
     
-    <style>
+<style>
+.border-green {
+  border-bottom: 1px solid #00bd7e;
+}
 .modal {
   position: fixed;
   z-index: 1;

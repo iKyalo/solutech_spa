@@ -4,33 +4,37 @@
       <h1 class="green">My Tasks</h1>
     </div>
     <LoadingBox v-if="loading" />
-
     <div v-else>
       <table class="task-table">
         <thead>
           <tr>
             <th>#</th>
+            <!-- <th>ID</th> -->
             <th>Task Name</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(task, index) in tasks" :key="index">
-            <td><input type="checkbox" v-model="selected_tasks" :value="task.id" /></td>
+          <tr v-for="task in tasks" :key="task.id">
+            <td><input type="checkbox" v-model="selected_tasks" :value="task.task_id" /></td>
+            <!-- <td>{{ task.task_id }}</td> -->
             <td>{{ task.name }}</td>
             <td>{{ task.status_name }}</td>
           </tr>
         </tbody>
       </table>
-      <div id="status-change">
-        <span>Change Status:</span>
-        <select id="status-select" v-model="selectedStatusId">
-          <option v-for="(status, index) in statusOptions" :value="status.id" :key="index">
-            {{ status.name }}
-          </option>
-        </select>
-        <button id="status-confirm" @click="updateStatus">Confirm</button>
-      </div>
+      <form @submit.prevent="updateStatus">
+        <div id="status-change">
+          <span>Change Status:</span>
+          <select id="status-select" v-model="selectedStatusId" required>
+            <option value="" disabled selected hidden>Select an option</option>
+            <option v-for="(status, index) in statusOptions" :value="status.id" :key="index">
+              {{ status.name }}
+            </option>
+          </select>
+          <button id="status-confirm">Confirm</button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -81,11 +85,14 @@ export default {
       const payload = { user_id: user.id }
       try {
         const response = await axios.post(config.BASE_URL + '/api/my-tasks', payload, { headers })
-        this.tasks = response.data.tasks
+        this.tasks = response.data
+        console.log(this.tasks)
         this.loading = false
+        this.selected_tasks = []
       } catch (error) {
         console.error(error)
         this.loading = false
+        this.selected_tasks = []
       }
     },
     async updateStatus() {
@@ -103,7 +110,7 @@ export default {
         .post(config.BASE_URL + '/api/task/update', payload, { headers })
         .then((response) => {
           console.log(response.data)
-          this.fetchStatuses
+          this.fetchTasks()
           alert('Tasks Updated')
         })
         .catch((error) => {

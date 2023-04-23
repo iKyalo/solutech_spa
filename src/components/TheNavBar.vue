@@ -16,7 +16,7 @@
       > -->
       <RouterLink :class="{ active: isCurrentRoute('/tasks') }" to="/tasks">Tasks</RouterLink>
       <RouterLink :class="{ active: isCurrentRoute('/reports') }" to="/reports">Reports</RouterLink>
-      <a style="float: right" @click="logout">Logout</a>
+      <a style="float: right; cursor: pointer" @click="logout">Logout</a>
       <a href="javascript:void(0);" class="icon" @click="toggleResponsive">
         <i class="fa fa-bars"></i>
       </a>

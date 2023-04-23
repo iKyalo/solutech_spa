@@ -84,7 +84,7 @@ export default {
           localStorage.setItem('token', res.data.token)
           localStorage.setItem('user', JSON.stringify(res.data.user))
         })
-        .then(this.$router.push('/'))
+        .then(this.$router.replace('/'))
         .catch((error) => {
           console.log(error)
           this.errors = error.response.data.errors
