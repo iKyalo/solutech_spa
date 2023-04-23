@@ -1,7 +1,7 @@
 <template>
   <div class="container">
-    <ModalTask :title="'Add New Task'" :show="show" @close="closeModal">
-      <form @submit.prevent="addTask">
+    <ModalTask :title="editing ? 'Edit Task' : 'Add New Task'" :show="show" @close="closeModal">
+      <form @submit.prevent="submitTask">
         <label for="task-input">Task Title:</label>
         <input type="text" id="task-input" v-model="new_task.title" required />
 
@@ -11,7 +11,7 @@
         <label style="margin-top: 10px" for="due-date-input">Due Date:</label>
         <input type="date" id="due-date-input" v-model="new_task.date" />
 
-        <button type="submit">Add Task</button>
+        <button type="submit">{{ editing ? 'Edit Task' : 'Save Task' }}</button>
       </form>
     </ModalTask>
     <!-- <ModalFilter :title="'Filter'" :show="false" @close="closeFilter">
@@ -38,11 +38,11 @@
     <table class="task-table">
       <thead>
         <tr>
-          <th style="width: 10%">#</th>
+          <th style="width: 5%">#</th>
           <th style="width: 20%">Task Name</th>
-          <th style="width: 20%">Status</th>
+          <th style="width: 15%">Status</th>
           <th style="width: 30%">Assigned To</th>
-          <th style="width: 20%">Actions</th>
+          <th style="width: 30%">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -51,7 +51,10 @@
           <td>{{ task.name }}</td>
           <td>{{ task.status_name }}</td>
           <td>{{ task.user_name }}</td>
-          <td><button class="btn-edit">Edit</button> <button class="btn-delete">Delete</button></td>
+          <td>
+            <button class="btn-edit" @click="editTask()">Edit</button>
+            <button class="btn-delete" @click="deleteTask(task.id)">Delete</button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -67,10 +70,12 @@ export default {
   components: { ModalTask },
   data() {
     return {
+      editing: false,
       show: false,
       filter: false,
       tasks: [],
       new_task: {
+        id: '',
         title: '',
         description: '',
         date: ','
@@ -116,7 +121,16 @@ export default {
       this.new_task.description = ''
       this.new_task.date = ''
     },
+    submitTask() {
+      if (this.editing) {
+        this.editTask()
+      } else {
+        this.addTask()
+      }
+    },
     addTask() {
+      this.editing = false
+      this.resetForm()
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
 
@@ -151,6 +165,46 @@ export default {
           // handle error response
           console.error(error.response.data.message)
         })
+    },
+    deleteTask(taskId) {
+      const token = localStorage.getItem('token')
+      const headers = { Authorization: `Bearer ${token}` }
+
+      // Alert confirmation before deleting task
+      if (confirm('Are you sure you want to delete this task?')) {
+        axios
+          .delete(config.BASE_URL + '/api/tasks', { headers, data: { taskId } })
+          .then((response) => {
+            console.log(response.data)
+            alert('Task deleted successfully')
+            this.fetchTasks()
+          })
+          .catch((error) => {
+            console.error(error.response.data.message)
+          })
+      }
+    },
+    editTask() {
+      this.editing = true
+      this.openModal()
+      const token = localStorage.getItem('token')
+      const headers = { Authorization: `Bearer ${token}` }
+
+      axios
+        .post(config.BASE_URL + '/api/tasks/' + this.new_task.id, this.new_task, { headers })
+        .then((response) => {
+          // handle success response
+          console.log(response.data)
+          this.resetForm()
+          alert('Task Updated Successfully')
+          this.fetchTasks
+        })
+        .catch((error) => {
+          // handle error response
+          console.error(error.response.data.message)
+        })
+
+      // this.openModal
     }
   }
 }
@@ -166,6 +220,7 @@ export default {
 }
 .btn-delete {
   background-color: rgb(231, 40, 40);
+  margin-left: 1rem;
 }
 .container {
   padding: 0px;
