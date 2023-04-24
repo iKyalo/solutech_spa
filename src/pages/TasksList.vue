@@ -31,33 +31,36 @@
     <div class="border-green">
       <h1 class="green">Task List</h1>
     </div>
-    <div class="btns-box">
-      <button class="btnAddTask" @click="openModal">Add New</button>
-      <!-- <button class="btnFilter" @click="openFilter">Filter</button> -->
+    <LoadingBox v-if="loading" />
+    <div class="" v-else>
+      <div class="btns-box">
+        <button class="btnAddTask" @click="openModal">Add New</button>
+        <!-- <button class="btnFilter" @click="openFilter">Filter</button> -->
+      </div>
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th style="width: 5%">#</th>
+            <th style="width: 20%">Task Name</th>
+            <th style="width: 15%">Status</th>
+            <th style="width: 30%">Assigned To</th>
+            <th style="width: 30%">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(task, index) in tasks" :key="index">
+            <td>{{ ++index }}</td>
+            <td>{{ task.name }}</td>
+            <td>{{ task.status_name }}</td>
+            <td>{{ task.user_name }}</td>
+            <td>
+              <button class="btn-edit" @click="editTask()">Edit</button>
+              <button class="btn-delete" @click="deleteTask(task.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <table class="task-table">
-      <thead>
-        <tr>
-          <th style="width: 5%">#</th>
-          <th style="width: 20%">Task Name</th>
-          <th style="width: 15%">Status</th>
-          <th style="width: 30%">Assigned To</th>
-          <th style="width: 30%">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(task, index) in tasks" :key="index">
-          <td>{{ ++index }}</td>
-          <td>{{ task.name }}</td>
-          <td>{{ task.status_name }}</td>
-          <td>{{ task.user_name }}</td>
-          <td>
-            <button class="btn-edit" @click="editTask()">Edit</button>
-            <button class="btn-delete" @click="deleteTask(task.id)">Delete</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 </template>
 
@@ -65,11 +68,14 @@
 import axios from 'axios'
 import ModalTask from '../components/ModalTask.vue'
 import config from '../config'
+import LoadingBox from '../components/LoadingBox.vue'
 
 export default {
-  components: { ModalTask },
+  components: { ModalTask, LoadingBox },
   data() {
     return {
+      loading: false,
+
       editing: false,
       show: false,
       filter: false,
@@ -87,6 +93,8 @@ export default {
   },
   methods: {
     async fetchTasks() {
+      this.loading = true
+
       try {
         const token = localStorage.getItem('token')
         const headers = { Authorization: `Bearer ${token}` }
@@ -96,9 +104,10 @@ export default {
           console.log(tasks)
           this.tasks = tasks
           console.log(this.tasks)
-          // do something with the statuses
+          this.loading = false
         } catch (error) {
           console.error(error)
+          this.loading = false
         }
       } catch (error) {
         console.error(error)
@@ -203,8 +212,6 @@ export default {
           // handle error response
           console.error(error.response.data.message)
         })
-
-      // this.openModal
     }
   }
 }

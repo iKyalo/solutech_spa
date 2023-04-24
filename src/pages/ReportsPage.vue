@@ -1,111 +1,119 @@
 <template>
   <div class="base">
-    <div class="w3-bar w3-black">
-      <button id="btnStatus" class="w3-bar-item w3-button" @click="openTab('Status')">
-        Task Status
-      </button>
-      <button id="btnCompletions" class="w3-bar-item w3-button" @click="openTab('Completions')">
-        Task Completions
-      </button>
-      <button id="btnActivity" class="w3-bar-item w3-button" @click="openTab('Activity')">
-        User Activity
-      </button>
-    </div>
-    <div id="Status" class="box" style="display: block">
-      <div>
-        <h1>Task Status Report</h1>
-        <div class="border"></div>
-        <div class="summary">
-          <h2>Summary</h2>
-
-          <p>Total tasks: {{ status.total }}</p>
-          <p>Completed tasks: {{ status.completed }}</p>
-          <p>In progress tasks: {{ status.in_progress }}</p>
-          <p>Not started tasks: {{ status.not_started }}</p>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Task name</th>
-              <th>Status</th>
-              <th>Assigned to</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(stat, idx) in status.status_summary" :key="idx">
-              <td>{{ stat.id }}</td>
-              <td>{{ stat.name }}</td>
-              <td class="status-completed" v-if="stat.status_name == 'Completed'">
-                {{ stat.status_name }}
-              </td>
-              <td class="status-in-progress" v-if="stat.status_name == 'In Progress'">
-                {{ stat.status_name }}
-              </td>
-              <td class="status-not-started" v-if="stat.status_name == 'Not Started'">
-                {{ stat.status_name }}
-              </td>
-              <td>{{ stat.user_name }}</td>
-            </tr>
-
-            <!-- add more rows as needed -->
-          </tbody>
-        </table>
+    <div class="">
+      <div class="w3-bar w3-black">
+        <button id="btnStatus" class="w3-bar-item w3-button" @click="openTab('Status')">
+          Task Status
+        </button>
+        <button id="btnCompletions" class="w3-bar-item w3-button" @click="openTab('Completions')">
+          Task Completions
+        </button>
+        <button id="btnActivity" class="w3-bar-item w3-button" @click="openTab('Activity')">
+          User Activity
+        </button>
       </div>
-    </div>
-    <div id="Completions" class="box" style="display: none">
-      <div class="">
-        <h1>Task Completions Report</h1>
-        <div class="border"></div>
-        <div class="chart-container">
-          <div v-for="(task, i) in completions.tasks" :key="i" class="bar-box">
-            <div class="bar">
-              <div class="bar-fill" :style="'height: ' + task.completion_rate * 10000 + '%'"></div>
+      <LoadingBox v-if="loading" class="" />
+      <div v-else>
+        <div id="Status" class="box" style="display: block">
+          <div>
+            <h1>Task Status Report</h1>
+            <div class="border"></div>
+            <div class="summary">
+              <h2>Summary</h2>
+
+              <p>Total tasks: {{ status.total }}</p>
+              <p>Completed tasks: {{ status.completed }}</p>
+              <p>In progress tasks: {{ status.in_progress }}</p>
+              <p>Not started tasks: {{ status.not_started }}</p>
             </div>
-            <div class="label">{{ task.name.substr(0, 7) }}...</div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Task name</th>
+                  <th>Status</th>
+                  <th>Assigned to</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(stat, idx) in status.status_summary" :key="idx">
+                  <td>{{ stat.id }}</td>
+                  <td>{{ stat.name }}</td>
+                  <td class="status-completed" v-if="stat.status_name == 'Completed'">
+                    {{ stat.status_name }}
+                  </td>
+                  <td class="status-in-progress" v-if="stat.status_name == 'In Progress'">
+                    {{ stat.status_name }}
+                  </td>
+                  <td class="status-not-started" v-if="stat.status_name == 'Not Started'">
+                    {{ stat.status_name }}
+                  </td>
+                  <td>{{ stat.user_name }}</td>
+                </tr>
+
+                <!-- add more rows as needed -->
+              </tbody>
+            </table>
           </div>
         </div>
-        <p>Summary:</p>
-        <ul class="ul-info">
-          <li>Total Tasks Completed: {{ completions.total }}</li>
-          <li>Average Completion Time: {{ completions.average }} hours</li>
-          <li>Tasks with the highest completion rates:</li>
-          <ul>
-            <li v-for="(task, i) in completions.tasks" :key="i">
-              {{ task.name }} ({{ task.completion_rate * 100 }}%)
-            </li>
-          </ul>
-        </ul>
-      </div>
-    </div>
-    <div id="Activity" class="box" style="display: none">
-      <div class="">
-        <h2>User Activity Report</h2>
-        <div class="border"></div>
-        <div class="summary">
-          <p>Total Users: {{ activity.total }}</p>
-          <p>Active Users: {{ activity.active }}</p>
+        <div id="Completions" class="box" style="display: none">
+          <div class="">
+            <h1>Task Completions Report</h1>
+            <div class="border"></div>
+            <div class="chart-container">
+              <div v-for="(task, i) in completions.tasks" :key="i" class="bar-box">
+                <div class="bar">
+                  <div
+                    class="bar-fill"
+                    :style="'height: ' + task.completion_rate * 10000 + '%'"
+                  ></div>
+                </div>
+                <div class="label">{{ task.name.substr(0, 7) }}...</div>
+              </div>
+            </div>
+            <p>Summary:</p>
+            <ul class="ul-info">
+              <li>Total Tasks Completed: {{ completions.total }}</li>
+              <li>Average Completion Time: {{ completions.average }} hours</li>
+              <li>Tasks with the highest completion rates:</li>
+              <ul>
+                <li v-for="(task, i) in completions.tasks" :key="i">
+                  {{ task.name }} ({{ task.completion_rate * 100 }}%)
+                </li>
+              </ul>
+            </ul>
+          </div>
         </div>
-        <table class="user-activity-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Tasks Assigned</th>
-              <th>Tasks Completed</th>
-              <th>Average Completion Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(user, idx) in activity.users" :key="idx">
-              <td>{{ user.name }}</td>
-              <td>{{ user.tasks_assigned }}</td>
-              <td>{{ user.tasks_completed }}</td>
-              <td>{{ number_format(user.avg_completion_time) }} hours</td>
-            </tr>
-            <!-- more users -->
-          </tbody>
-        </table>
+        <div id="Activity" class="box" style="display: none">
+          <div class="">
+            <h2>User Activity Report</h2>
+            <div class="border"></div>
+            <div class="summary">
+              <p>Total Users: {{ activity.total }}</p>
+              <p>Active Users: {{ activity.active }}</p>
+            </div>
+            <table class="user-activity-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Tasks Assigned</th>
+                  <th>Tasks Completed</th>
+                  <th>Average Completion Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(user, idx) in activity.users" :key="idx">
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.tasks_assigned }}</td>
+                  <td>{{ user.tasks_completed }}</td>
+                  <td>{{ number_format(user.avg_completion_time) }} hours</td>
+                </tr>
+                <!-- more users -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -114,10 +122,13 @@
 <script>
 import axios from 'axios'
 import config from '../config'
+import LoadingBox from '../components/LoadingBox.vue'
 
 export default {
+  components: { LoadingBox },
   data() {
     return {
+      loading: false,
       token: localStorage.getItem('token'),
       status: {
         total: 0,
@@ -149,6 +160,8 @@ export default {
     async fetchStatusData() {
       const token = localStorage.getItem('token')
       const headers = { Authorization: `Bearer ${token}` }
+      this.loading = true
+
       try {
         const response = await axios.get(config.BASE_URL + '/api/status/tasks', { headers })
         const res = response.data
@@ -158,8 +171,10 @@ export default {
         this.status.in_progress = res.in_progress_tasks
         this.status.not_started = res.not_started_tasks
         this.status.status_summary = res.tasks
+        this.loading = false
       } catch (error) {
         console.error(error)
+        this.loading = false
       }
     },
     async fetchCompletionsData() {
